@@ -7,3 +7,4 @@ openai
 huggingface_hub
 sentence-transformers==2.2.2
 InstructorEmbedding==1.0.1
+python-dotenv

@@ -32,7 +32,7 @@ def get_text_chunks(raw_text):
 
 def get_embeddings(chunks):
     embeddings = HuggingFaceInstructEmbeddings(
-        query_instruction="Ingest the provided PDF documents and use their content as context for answering user queries. Extract relevant information from the PDFs to provide accurate responses. Prioritize information in headings, subheadings, and bullet points. If the user asks about specific sections or details, ensure the model references the corresponding parts of the uploaded PDFs. Consider context across multiple pages and maintain coherence in responses. Additionally, emphasize accurate and concise answers, and avoid generating information not present in the provided PDFs.", model_name="sentence-transformers/all-MiniLM-L6-v2", api_key="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")
+        query_instruction="Ingest the provided PDF documents and use their content as context for answering user queries. Extract relevant information from the PDFs to provide accurate responses. Prioritize information in headings, subheadings, and bullet points. If the user asks about specific sections or details, ensure the model references the corresponding parts of the uploaded PDFs. Consider context across multiple pages and maintain coherence in responses. Additionally, emphasize accurate and concise answers, and avoid generating information not present in the provided PDFs.", model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_texts(texts=chunks, embedding=embeddings)
     return vectorstore
 
