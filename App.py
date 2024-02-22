@@ -1,16 +1,17 @@
 from PyPDF2 import PdfReader
-import dotenv
 import streamlit as st
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores.faiss import FAISS
-from langchain.embeddings.huggingface import HuggingFaceInstructEmbeddings
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.chat_models import ChatOpenAI
 # from langchain_openai import ChatOpenAI
 from langchain_community.llms import HuggingFaceEndpoint
+from Web_Scrape import scrape_data, search_google
 from templates.chat import css, user_template, bot_template
 from dotenv import load_dotenv
+
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -22,22 +23,33 @@ def get_pdf_text(pdf_docs):
     return text
 
 
+def get_web_text(query, option):
+    web_text = ""
+    url_list = search_google(query, stop=int(option))
+    for url in url_list:
+        if url:
+            web_text += scrape_data(url)
+    return web_text
+
+
 def get_text_chunks(raw_text):
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len)
 
     chunks = text_splitter.split_text(raw_text)
+    print(chunks)
     return chunks
 
 
-def get_embeddings(chunks):
-    embeddings = HuggingFaceInstructEmbeddings(
-        query_instruction="Ingest the provided PDF documents and use their content as context for answering user queries. Extract relevant information from the PDFs to provide accurate responses. Prioritize information in headings, subheadings, and bullet points. If the user asks about specific sections or details, ensure the model references the corresponding parts of the uploaded PDFs. Consider context across multiple pages and maintain coherence in responses. Additionally, emphasize accurate and concise answers, and avoid generating information not present in the provided PDFs.", model_name="sentence-transformers/all-MiniLM-L6-v2")
+def get_embeddings(chunks, api_Secret):
+    embeddings = HuggingFaceInferenceAPIEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2", api_key=api_Secret)
     vectorstore = FAISS.from_texts(texts=chunks, embedding=embeddings)
+
     return vectorstore
 
 
-def get_conversation_chain(vectorstore, setup_option, api_key=None):
+def get_conversation_chain(vectorstore, setup_option):
     #
     # llm = ChatOpenAI()
 
@@ -47,7 +59,7 @@ def get_conversation_chain(vectorstore, setup_option, api_key=None):
 
     elif setup_option == "Hugging Face":
         llm = HuggingFaceEndpoint(
-            repo_id="google/flan-t5-xxl", temperature=0.5, api_key=api_key)
+            repo_id="google/flan-t5-xxl", temperature=0.5)
 
     elif setup_option == "OpenAI":
         pass
@@ -83,7 +95,6 @@ def main():
 
     st.header("Chat with pdfs :books:")
     user_query = st.text_input("Ask a question...")
-
     try:
         if user_query:
             handle_user_input(user_query)
@@ -91,41 +102,55 @@ def main():
             st.text_input("Ask a question...")
     except:
         st.write("""An Error has Occurred: Please Upload A document first then chat.
-                 Ignore If pdf is already uploaded""")
+                Ignore If pdf is already uploaded""")
 
     with st.sidebar:
         st.subheader("Your Documents")
+
+        query = ""
         pdf_docs = st.file_uploader(
             "Upload your pdfs here", accept_multiple_files=True)
         setup_option = st.radio("Select Setup Option", [
                                 "Local setup using LM Studio", "Hugging Face", "OpenAI"])
-
         api_key = None
         if setup_option == "Local setup using LM Studio":
-            api_key = st.text_input("Enter LM Studio localhost address")
+            api_key = st.text_input(
+                "Enter LM Studio localhost address", disabled=True)
 
         elif setup_option == "Hugging Face":
             api_key = st.text_input("Enter Hugging Face API Key")
 
         elif setup_option == "OpenAI":
             api_key = st.text_input("Enter OpenAI API Key", disabled=True)
+        api_key = str(api_key).strip()
+        query_option = st.checkbox("Query the Web to add it to the knowledge")
+
+        if query_option:
+            query = st.text_area("Enter the Query for the google search")
+            user_input = st.text_input(
+                'Select how many links you want to scrape data from (default=10): ', value='10')
+
+            # Convert input to integer, default to 10 if input is empty
+            try:
+                option = int(user_input) if user_input else 10
+            except ValueError:
+                st.error("Please enter a valid integer.")
 
         if st.button("Process"):
             with st.spinner("Processing"):
                 # get pdf text
                 raw_text = get_pdf_text(pdf_docs)
-                # st.write(raw_text)
-
+                if query and option:
+                    web_text = get_web_text(query, option)
+                    raw_text += web_text
                 # get the text chunks
                 text_chunks = get_text_chunks(raw_text)
-
                 # Text embeddings
                 # Vector Store
-                vectorstore = get_embeddings(text_chunks)
-
+                vectorstore = get_embeddings(text_chunks, api_key)
                 # Create Conversation
                 st.session_state.conversation = get_conversation_chain(
-                    vectorstore, setup_option, api_key)
+                    vectorstore, setup_option)
 
 
 if __name__ == "__main__":

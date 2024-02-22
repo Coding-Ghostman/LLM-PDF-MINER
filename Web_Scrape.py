@@ -2,8 +2,8 @@ from googlesearch import search
 from bs4 import BeautifulSoup
 
 
-from langchain.retrievers import ArxivRetriever
-from langchain.document_loaders import PyMuPDFLoader
+from langchain_community.retrievers import ArxivRetriever
+from langchain_community.document_loaders import PyMuPDFLoader
 
 
 from selenium import webdriver
@@ -13,19 +13,16 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 
-SCRAPED_DATA = dict()
 
-
-def search_google(query):
+def search_google(query, stop=10):
     links = []
-    for link in search(query, tld="com", num=15, stop=10, pause=1):
+    for link in search(query, tld="com", num=15, stop=stop, pause=1):
         links.append(link)
     return links
 
 
 def scrape_data(url):
-
-    service = Service(executable_path="chromedriver.exe")
+    service = Service(executable_path="./webdriver/chromedriver.exe")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run Chrome in headless mode (no GUI)
     options.add_argument('--ignore-certificate-errors')
@@ -73,10 +70,10 @@ def scrape_data(url):
             text += element.text + "\n"
 
     # For Creating individual tokens from the website
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (token.strip() for line in lines for token in line.split(" "))
-    tokens = "\n".join(chunk for chunk in chunks if chunk)
+    # lines = (line.strip() for line in text.splitlines())
+    # chunks = (token.strip() for line in lines for token in line.split(" "))
+    # tokens = "\n".join(chunk for chunk in chunks if chunk)
 
-    SCRAPED_DATA[url] = tokens
     print("scraped data added")
+    return text
     driver.quit()
