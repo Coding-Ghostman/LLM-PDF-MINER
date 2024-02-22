@@ -1,4 +1,5 @@
 from PyPDF2 import PdfReader
+from sqlalchemy import null
 import streamlit as st
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores.faiss import FAISS
@@ -29,15 +30,15 @@ def get_web_text(query, option):
     for url in url_list:
         if url:
             web_text += scrape_data(url)
+            print(str(web_text))
     return web_text
 
 
 def get_text_chunks(raw_text):
     text_splitter = CharacterTextSplitter(
-        separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len)
+        separator="\n", chunk_size=2000, chunk_overlap=400, length_function=len)
 
     chunks = text_splitter.split_text(raw_text)
-    print(chunks)
     return chunks
 
 
@@ -73,6 +74,7 @@ def get_conversation_chain(vectorstore, setup_option):
 
 def handle_user_input(user_query):
     response = st.session_state.conversation({"question": user_query})
+    print(response)
     st.session_state.chat_history = response['chat_history']
     for i, message in enumerate(st.session_state.chat_history):
         if i % 2 == 0:
@@ -84,8 +86,8 @@ def handle_user_input(user_query):
 
 
 def main():
-    load_dotenv()
     st.set_page_config(page_title="LLM PDF MINER")
+    load_dotenv()
     st.write(css, unsafe_allow_html=True)
 
     if "conversation" not in st.session_state:
@@ -108,6 +110,7 @@ def main():
         st.subheader("Your Documents")
 
         query = ""
+        option = None
         pdf_docs = st.file_uploader(
             "Upload your pdfs here", accept_multiple_files=True)
         setup_option = st.radio("Select Setup Option", [
@@ -128,7 +131,7 @@ def main():
         if query_option:
             query = st.text_area("Enter the Query for the google search")
             user_input = st.text_input(
-                'Select how many links you want to scrape data from (default=10): ', value='10')
+                'Select how many links you want to scrape data from (default=10 - max=15): ', value='10')
 
             # Convert input to integer, default to 10 if input is empty
             try:
@@ -137,20 +140,31 @@ def main():
                 st.error("Please enter a valid integer.")
 
         if st.button("Process"):
-            with st.spinner("Processing"):
-                # get pdf text
-                raw_text = get_pdf_text(pdf_docs)
-                if query and option:
-                    web_text = get_web_text(query, option)
-                    raw_text += web_text
-                # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
-                # Text embeddings
-                # Vector Store
-                vectorstore = get_embeddings(text_chunks, api_key)
-                # Create Conversation
-                st.session_state.conversation = get_conversation_chain(
-                    vectorstore, setup_option)
+            try:
+                with st.spinner("Processing"):
+                    raw_text = ""
+
+                    if pdf_docs:
+                        # get pdf text
+                        raw_text += get_pdf_text(pdf_docs)
+
+                    if query and option:
+                        web_text = get_web_text(query, option)
+                        raw_text += web_text
+
+                    # get the text chunks
+                    text_chunks = get_text_chunks(raw_text)
+                    print(str(text_chunks))
+                    # Text embeddings
+                    # Vector Store
+                    vectorstore = get_embeddings(text_chunks, api_key)
+                    # Create Conversation
+                    st.session_state.conversation = get_conversation_chain(
+                        vectorstore, setup_option)
+
+            except Exception as e:
+                st.write(f"An Error has Occurred: {str(e)}")
+                st.write("Please upload a document or check your input.")
 
 
 if __name__ == "__main__":

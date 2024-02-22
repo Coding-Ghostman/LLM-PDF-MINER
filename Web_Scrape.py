@@ -75,5 +75,5 @@ def scrape_data(url):
     # tokens = "\n".join(chunk for chunk in chunks if chunk)
 
     print("scraped data added")
-    return text
     driver.quit()
+    return text
