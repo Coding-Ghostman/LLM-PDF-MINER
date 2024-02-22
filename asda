@@ -1,0 +1,23 @@
+
+# Specify the desired version of ChromeDriver
+desired_version = "122.0.6261.58"
+
+# Check if ChromeDriver is already present in the current directory
+if os.path.isfile('chromedriver.exe'):
+    print("ChromeDriver is already present in the current directory. Skipping download.")
+else:
+    # Build the download URL for the specified version
+    download_url = f"https://chromedriver.storage.googleapis.com/{desired_version}/chromedriver_win32.zip"
+
+    # Download the zip file using the URL built above
+    latest_driver_zip = wget.download(download_url, 'chromedriver.zip')
+
+    # Extract the zip file
+    with zipfile.ZipFile(latest_driver_zip, 'r') as zip_ref:
+        zip_ref.extractall()
+
+    # Delete the zip file downloaded above
+    os.remove(latest_driver_zip)
+
+    print(
+        f"ChromeDriver version {desired_version} has been downloaded and extracted.")

@@ -18,6 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE'
 response = requests.get(url)
+print(response.text)
 version_number = response.text
 
 # build the donwload url
