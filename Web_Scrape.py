@@ -1,9 +1,6 @@
 from googlesearch import search
-from bs4 import BeautifulSoup
-import requests
-import wget
-import zipfile
-import os
+from bs4 import BeautifulSoup, Comment
+
 
 from langchain_community.retrievers import ArxivRetriever
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -15,6 +12,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.options import Options
+import re
 
 
 def search_google(query, stop=10):
@@ -24,27 +26,27 @@ def search_google(query, stop=10):
     return links
 
 
+def clean_html(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+
+    # Remove script and style tags
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.decompose()
+
+    # Remove unnecessary attributes
+    for tag in soup():
+        for attribute in ["class", "id", "name", "style"]:
+            del tag[attribute]
+
+    # Remove comments
+    comments = soup.find_all(text=lambda text: isinstance(text, Comment))
+    [comment.extract() for comment in comments]
+
+    return soup.get_text()
+
+
 def scrape_data(url):
-    url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE'
-    response = requests.get(url)
-    print(response.text)
-    version_number = response.text
-
-    # build the donwload url
-    download_url = "https://chromedriver.storage.googleapis.com/" + \
-        version_number + "/chromedriver_win32.zip"
-
-    # download the zip file using the url built above
-    latest_driver_zip = wget.download(download_url, 'chromedriver.zip')
-
-    # extract the zip file
-    with zipfile.ZipFile(latest_driver_zip, 'r') as zip_ref:
-        zip_ref.extractall()  # you can specify the destination folder path here
-    # delete the zip file downloaded above
-    os.remove(latest_driver_zip)
-    os.chmod('chromedriver.exe', 0o755)
-
-    service = Service(executable_path="chromedriver.exe")
+    service = Service(executable_path=ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run Chrome in headless mode (no GUI)
     options.add_argument('--ignore-certificate-errors')
@@ -65,7 +67,7 @@ def scrape_data(url):
     except TimeoutException:
         print("Loading took too much time!")
 
-    # check if url is a pdf or arxiv link
+    # Check if url is a pdf or arxiv link
     if url.endswith(".pdf"):
         loader = PyMuPDFLoader(url)
         text = str(loader.load())
@@ -76,26 +78,9 @@ def scrape_data(url):
         text = retriever.get_relevant_documents(query=doc_num)[0].page_content
 
     else:
-
         page_source = driver.execute_script("return document.body.outerHTML;")
-        soup = BeautifulSoup(page_source, "html.parser")
-        soup.encode(
-            'utf-8', errors='ignore'
-        ).decode('utf-8')
-
-        # for script in soup(["script", "style"]):
-        #     script.extract()
-
-        text = ""
-        tags = ["h1", "h2", "h3", "h4", "h5", "p"]
-        for element in soup.find_all(tags):
-            text += element.text + "\n"
-
-    # For Creating individual tokens from the website
-    # lines = (line.strip() for line in text.splitlines())
-    # chunks = (token.strip() for line in lines for token in line.split(" "))
-    # tokens = "\n".join(chunk for chunk in chunks if chunk)
+        cleaned_text = clean_html(page_source)
 
     print("scraped data added")
     driver.quit()
-    return text
+    return cleaned_text

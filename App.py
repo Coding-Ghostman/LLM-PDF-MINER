@@ -31,13 +31,12 @@ def get_web_text(query, option):
     for url in url_list:
         if url:
             web_text += scrape_data(url)
-            print(str(web_text))
     return web_text
 
 
 def get_text_chunks(raw_text):
     text_splitter = CharacterTextSplitter(
-        separator="\n", chunk_size=2000, chunk_overlap=400, length_function=len)
+        separator="\n", chunk_size=1200, chunk_overlap=300, length_function=len)
 
     chunks = text_splitter.split_text(raw_text)
     return chunks
@@ -47,7 +46,7 @@ def get_embeddings(chunks, api_Secret):
     embeddings = HuggingFaceInferenceAPIEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2", api_key=api_Secret)
     vectorstore = FAISS.from_texts(texts=chunks, embedding=embeddings)
-
+    print(embeddings)
     return vectorstore
 
 
@@ -61,7 +60,7 @@ def get_conversation_chain(vectorstore, setup_option):
 
     elif setup_option == "Hugging Face":
         llm = HuggingFaceEndpoint(
-            repo_id="google/flan-t5-xxl", temperature=0.5)
+            repo_id="google/flan-t5-xxl", temperature=0.5, max_length=512)
 
     elif setup_option == "OpenAI":
         pass
@@ -100,14 +99,14 @@ def main():
 
     st.header("Chat with pdfs :books:")
     user_query = st.text_input("Ask a question...")
-    try:
-        if user_query:
-            handle_user_input(user_query)
-            user_query = ""
-            st.text_input("Ask a question...")
-    except:
-        st.write("""An Error has Occurred: Please Upload A document first then chat.
-                Ignore If pdf is already uploaded""")
+    # try:
+    if user_query:
+        handle_user_input(user_query)
+        user_query = ""
+        st.text_input("Ask a question...")
+    # except:
+    #     st.write("""An Error has Occurred: Please Upload A document first then chat.
+    #             Ignore If pdf is already uploaded""")
 
     with st.sidebar:
         st.subheader("Your Documents")
