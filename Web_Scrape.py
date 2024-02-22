@@ -22,7 +22,7 @@ def search_google(query, stop=10):
 
 
 def scrape_data(url):
-    os.chmod('./webdriver/chromedriver.exe', 0755)
+    os.chmod('./webdriver/chromedriver.exe', 0o755)
     service = Service(executable_path="./webdriver/chromedriver.exe")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run Chrome in headless mode (no GUI)
