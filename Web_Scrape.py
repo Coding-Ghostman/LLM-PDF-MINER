@@ -1,5 +1,8 @@
 from googlesearch import search
 from bs4 import BeautifulSoup
+import requests
+import wget
+import zipfile
 import os
 
 from langchain_community.retrievers import ArxivRetriever
@@ -13,6 +16,23 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 
+url = 'https://chromedriver.storage.googleapis.com/LATEST_RELEASE'
+response = requests.get(url)
+version_number = response.text
+
+# build the donwload url
+download_url = "https://chromedriver.storage.googleapis.com/" + \
+    version_number + "/chromedriver_win32.zip"
+
+# download the zip file using the url built above
+latest_driver_zip = wget.download(download_url, 'chromedriver.zip')
+
+# extract the zip file
+with zipfile.ZipFile(latest_driver_zip, 'r') as zip_ref:
+    zip_ref.extractall()  # you can specify the destination folder path here
+# delete the zip file downloaded above
+os.remove(latest_driver_zip)
+
 
 def search_google(query, stop=10):
     links = []
@@ -22,8 +42,8 @@ def search_google(query, stop=10):
 
 
 def scrape_data(url):
-    os.chmod('./webdriver/chromedriver.exe', 0o755)
-    service = Service(executable_path="./webdriver/chromedriver.exe")
+    os.chmod('chromedriver.exe', 0o755)
+    service = Service(executable_path="chromedriver.exe")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run Chrome in headless mode (no GUI)
     options.add_argument('--ignore-certificate-errors')
