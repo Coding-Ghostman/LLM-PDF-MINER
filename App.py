@@ -89,9 +89,9 @@ def handle_user_input(user_query):
 def main():
     st.set_page_config(page_title="LLM PDF MINER")
     load_dotenv()
-    
-    print(os.getenv('HUGGINGFACEHUB_API_TOKEN'))
+
     st.write(css, unsafe_allow_html=True)
+    st.write(os.getenv('HUGGINGFACEHUB_API_TOKEN'))
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
