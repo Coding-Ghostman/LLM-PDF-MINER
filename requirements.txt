@@ -11,4 +11,4 @@ python-dotenv
 selenium
 google
 beautifulsoup4
-wget
+webdriver_manager
