@@ -73,10 +73,18 @@ def scrape_data(url):
         text = str(loader.load())
 
     elif "arxiv" in url:
-        doc_num = url.split("/")[-1]
-        retriever = ArxivRetriever(load_max_docs=2)
-        text = retriever.get_relevant_documents(query=doc_num)[0].page_content
-
+        if url:
+            doc_num = url.split("/")[-1]
+            retriever = ArxivRetriever(load_max_docs=2)
+            relevant_documents = retriever.get_relevant_documents(
+                query=doc_num)
+            # Check if there are relevant documents before accessing the first one
+            if relevant_documents:
+                text = relevant_documents[0].page_content
+            else:
+                text = "No relevant documents found."
+        else:
+            text = "Invalid or missing URL."
     else:
         page_source = driver.execute_script("return document.body.outerHTML;")
         cleaned_text = clean_html(page_source)

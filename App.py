@@ -99,14 +99,13 @@ def main():
 
     st.header("Chat with pdfs :books:")
     user_query = st.text_input("Ask a question...")
-    try:
-        if user_query:
-            handle_user_input(user_query)
-            user_query = ""
-            st.text_input("Ask a question...")
-    except:
-        st.write("""An Error has Occurred: Please Upload A document first then chat.
-                Ignore If pdf is already uploaded""")
+    # try:
+    if user_query:
+        handle_user_input(user_query)
+        user_query = ""
+    # except:
+    #     st.write("""An Error has Occurred: Please Upload A document first then chat.
+    #             Ignore If pdf is already uploaded""")
 
     with st.sidebar:
         st.subheader("Your Documents")
