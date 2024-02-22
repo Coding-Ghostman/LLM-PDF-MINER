@@ -5,3 +5,4 @@ streamlit==1.31.1
 faiss-cpu
 openai
 huggingface_hub
+sentence-transformers==2.2.2
