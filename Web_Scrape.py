@@ -1,6 +1,6 @@
 from googlesearch import search
 from bs4 import BeautifulSoup
-
+import os
 
 from langchain_community.retrievers import ArxivRetriever
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -22,6 +22,7 @@ def search_google(query, stop=10):
 
 
 def scrape_data(url):
+    os.chmod('./webdriver/chromedriver.exe', 0755)
     service = Service(executable_path="./webdriver/chromedriver.exe")
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')  # Run Chrome in headless mode (no GUI)

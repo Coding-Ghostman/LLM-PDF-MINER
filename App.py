@@ -12,6 +12,7 @@ from langchain_community.llms import HuggingFaceEndpoint
 from Web_Scrape import scrape_data, search_google
 from templates.chat import css, user_template, bot_template
 from dotenv import load_dotenv
+import os
 
 
 def get_pdf_text(pdf_docs):
@@ -88,6 +89,8 @@ def handle_user_input(user_query):
 def main():
     st.set_page_config(page_title="LLM PDF MINER")
     load_dotenv()
+    
+    print(os.getenv('HUGGINGFACEHUB_API_TOKEN'))
     st.write(css, unsafe_allow_html=True)
 
     if "conversation" not in st.session_state:
