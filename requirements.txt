@@ -6,3 +6,5 @@ faiss-cpu
 openai
 huggingface_hub
 sentence-transformers==2.2.2
+torch==2.2.0
+InstructorEmbedding==1.0.1
