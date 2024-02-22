@@ -34,7 +34,7 @@ def get_text_chunks(raw_text):
 def get_embeddings(chunks):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     embeddings = HuggingFaceInstructEmbeddings(
-        query_instruction="Ingest the provided PDF documents and use their content as context for answering user queries. Extract relevant information from the PDFs to provide accurate responses. Prioritize information in headings, subheadings, and bullet points. If the user asks about specific sections or details, ensure the model references the corresponding parts of the uploaded PDFs. Consider context across multiple pages and maintain coherence in responses. Additionally, emphasize accurate and concise answers, and avoid generating information not present in the provided PDFs.", model_name="hkunlp/instructor-xl", model_kwargs={'device': device}, encode_kwargs={'device': device})
+        query_instruction="Ingest the provided PDF documents and use their content as context for answering user queries. Extract relevant information from the PDFs to provide accurate responses. Prioritize information in headings, subheadings, and bullet points. If the user asks about specific sections or details, ensure the model references the corresponding parts of the uploaded PDFs. Consider context across multiple pages and maintain coherence in responses. Additionally, emphasize accurate and concise answers, and avoid generating information not present in the provided PDFs.", model_name="sentence-transformers/all-MiniLM-L6-v2", model_kwargs={'device': device}, encode_kwargs={'device': device})
     vectorstore = FAISS.from_texts(texts=chunks, embedding=embeddings)
     return vectorstore
 
@@ -92,7 +92,7 @@ def main():
             user_query = ""
             st.text_input("Ask a question...")
     except:
-        st.write("""```An Error has Occurred: Please Upload A document first then chat.
+        st.write("""An Error has Occurred: Please Upload A document first then chat.
                  Ignore If pdf is already uploaded""")
 
     with st.sidebar:
