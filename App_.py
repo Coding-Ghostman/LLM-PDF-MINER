@@ -102,7 +102,7 @@ def main():
     if user_query:
         handle_user_input(user_query)
         user_query = ""
-        
+
     with st.sidebar:
         st.subheader("Your Documents")
         query = ""
